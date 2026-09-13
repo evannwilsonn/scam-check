@@ -1,0 +1,543 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scam Check — Is this job posting real?</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #0C0F14;
+  --surface: #161A22;
+  --surface-2: #1E232C;
+  --border: #2A303C;
+  --text: #E2E6ED;
+  --text-soft: #8B95A5;
+  --accent: #4A9EFF;
+  --red: #E54D42;
+  --amber: #D4943A;
+  --green: #3D9A6E;
+  --red-bg: rgba(229,77,66,.1);
+  --amber-bg: rgba(212,148,58,.1);
+  --green-bg: rgba(61,154,110,.1);
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: var(--text-soft);
+  font-size: 15px;
+  margin-bottom: 32px;
+  max-width: 50ch;
+}
+
+.field-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.field-hint {
+  font-size: 13px;
+  color: var(--text-soft);
+  margin-bottom: 8px;
+}
+
+textarea, input[type=text] {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 12px 14px;
+  line-height: 1.55;
+  resize: vertical;
+  transition: border-color .15s;
+}
+
+textarea:focus, input:focus { border-color: var(--accent); outline: none; }
+textarea { min-height: 160px; }
+
+.field-group { margin-bottom: 20px; }
+
+.flags-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 520px) { .flags-grid { grid-template-columns: 1fr; } }
+
+.flag-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-soft);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all .15s;
+  line-height: 1.4;
+}
+
+.flag-btn:hover { border-color: var(--text-soft); }
+.flag-btn.active {
+  border-color: var(--accent);
+  background: rgba(74,158,255,.08);
+  color: var(--text);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 13px 24px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+
+.btn-primary:hover { opacity: .9; }
+.btn-primary:disabled { opacity: .4; cursor: default; }
+
+.btn-ghost {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-soft);
+  padding: 12px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-ghost:hover { border-color: var(--text-soft); }
+.btn-ghost:disabled { opacity: .4; cursor: default; }
+
+.status-msg {
+  font-size: 13px;
+  color: var(--text-soft);
+  margin-top: 10px;
+  min-height: 20px;
+}
+
+.status-msg.err { color: var(--red); }
+
+/* --- Results --- */
+
+.results { margin-top: 36px; display: none; }
+.results.show { display: block; }
+
+.verdict-card {
+  border-radius: 8px;
+  padding: 20px 22px;
+  margin-bottom: 24px;
+}
+
+.verdict-card.block { background: var(--red-bg); border-left: 3px solid var(--red); }
+.verdict-card.review { background: var(--amber-bg); border-left: 3px solid var(--amber); }
+.verdict-card.caution { background: var(--amber-bg); border-left: 3px solid var(--amber); }
+.verdict-card.clear { background: var(--green-bg); border-left: 3px solid var(--green); }
+
+.verdict-score {
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.verdict-card.block .verdict-score { color: var(--red); }
+.verdict-card.review .verdict-score, .verdict-card.caution .verdict-score { color: var(--amber); }
+.verdict-card.clear .verdict-score { color: var(--green); }
+
+.verdict-text {
+  font-size: 15px;
+  margin-top: 8px;
+  color: var(--text);
+}
+
+.findings-list { list-style: none; padding: 0; }
+
+.finding-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.finding-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.sev-tag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  flex-shrink: 0;
+}
+
+.sev-tag.critical { color: var(--red); }
+.sev-tag.warning { color: var(--amber); }
+.sev-tag.note { color: var(--text-soft); }
+
+.finding-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.finding-why {
+  font-size: 13px;
+  color: var(--text-soft);
+  margin-top: 2px;
+}
+
+.finding-matched {
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-top: 6px;
+  word-break: break-word;
+}
+
+.clear-msg {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  font-size: 14px;
+  color: var(--text-soft);
+}
+
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-soft);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.disclaimer {
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  max-width: 55ch;
+}
+</style>
+
+<div class="container">
+  <h1>Is this job real?</h1>
+  <p class="subtitle">Paste the posting or the recruiter's message. Check what you observed about the account. Get a scored verdict with the reasons.</p>
+
+  <div class="field-group">
+    <label class="field-label">Posting or recruiter message</label>
+    <p class="field-hint">The full text — include contact details, pay claims, and any instructions they gave you.</p>
+    <textarea id="text" placeholder="Paste the full text here"></textarea>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label">Company name (if given)</label>
+    <input type="text" id="company" placeholder="e.g. Yovix, Leaf Home, RemoteHunter">
+  </div>
+
+  <div class="field-group">
+    <label class="field-label">Apply URL (if you have it)</label>
+    <p class="field-hint">Where the apply button actually sent you. Separate hops with -&gt; if you followed a chain.</p>
+    <input type="text" id="url" placeholder="e.g. https://remotehunter.com/apply-with-ai/...?utm_source=linkedin">
+  </div>
+
+  <div class="field-group">
+    <label class="field-label">What did you notice about the account?</label>
+    <p class="field-hint">Check everything that applies. These are things you see on the profile — the tool can't check them itself.</p>
+    <div class="flags-grid" id="flags">
+      <button class="flag-btn" data-flag="very_low_connections">Very few connections (&lt;10)</button>
+      <button class="flag-btn" data-flag="low_connections">Low connections (&lt;50)</button>
+      <button class="flag-btn" data-flag="no_profile_photo">No profile photo</button>
+      <button class="flag-btn" data-flag="stock_photo_face">Photo looks fake / AI</button>
+      <button class="flag-btn" data-flag="thin_profile">Thin profile, barely filled out</button>
+      <button class="flag-btn" data-flag="no_activity_history">No posts or activity</button>
+      <button class="flag-btn" data-flag="recruiter_new_account">Account seems brand new</button>
+      <button class="flag-btn" data-flag="duplicate_accounts">Saw the same from other accounts</button>
+      <button class="flag-btn" data-flag="same_script_seen_before">Identical script from other people</button>
+      <button class="flag-btn" data-flag="no_company_page">No real company page</button>
+      <button class="flag-btn" data-flag="no_company_insights">No company data on LinkedIn</button>
+      <button class="flag-btn" data-flag="company_insights_present">Full company insights shown</button>
+      <button class="flag-btn" data-flag="dodged_verification">Dodged when I asked to verify</button>
+      <button class="flag-btn" data-flag="name_company_mismatch">Name doesn't match company</button>
+      <button class="flag-btn" data-flag="poster_distant_connection">Poster is 3rd+ / no connection</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-primary" id="check">Check this</button>
+    <button class="btn-ghost" id="aiPass" disabled>Add language analysis</button>
+  </div>
+  <p class="status-msg" id="status"></p>
+
+  <div class="results" id="results">
+    <div class="verdict-card" id="verdictCard">
+      <div class="verdict-score" id="score"></div>
+      <p class="verdict-text" id="verdict"></p>
+    </div>
+
+    <p class="section-label">What turned up</p>
+    <ul class="findings-list" id="findingsList"></ul>
+
+    <p class="disclaimer">
+      This scores text, URLs, and what you reported about the account. It does not access LinkedIn, 
+      scan profiles, or verify employers automatically. A low score is not a clearance — always 
+      verify the employer through their own site before sharing personal information.
+    </p>
+  </div>
+</div>
+
+<script>
+const SEV_LABEL = { critical: "Serious", warning: "Warning", note: "Note" };
+
+// --- Flag toggle buttons ---
+document.querySelectorAll(".flag-btn").forEach(btn => {
+  btn.addEventListener("click", () => btn.classList.toggle("active"));
+});
+
+function getActiveFlags() {
+  return [...document.querySelectorAll(".flag-btn.active")].map(b => b.dataset.flag);
+}
+
+// --- Scoring engine (runs entirely in-browser, same logic as the Python scorer) ---
+
+const SIGNALS = [
+  { id:"advance_fee", sev:"critical", w:30, title:"You're asked to pay something",
+    why:"Legitimate employers never charge you to start work.",
+    p:["training fee","registration fee","application fee","processing fee","onboarding fee","background check fee","starter kit","pay for your own equipment","purchase the equipment","buy the software","refundable deposit","security deposit","administrative fee","certification fee","check to purchase","check for equipment","check to buy","funds to purchase","money for equipment"]},
+  { id:"money_mule", sev:"critical", w:34, title:"The job involves moving money or packages",
+    why:"Depositing checks and forwarding funds, or reshipping parcels, is how stolen money gets laundered.",
+    p:["deposit the check","cash the check","cashier's check","cashiers check","forward the funds","transfer the remaining","wire the balance","process payments on behalf","receive packages","reship","package forwarding","mystery shopper","secret shopper","money transfer agent"]},
+  { id:"banking_pii", sev:"critical", w:26, title:"Banking or identity details wanted up front",
+    why:"Account and identity details come after a signed offer, through payroll — never over chat.",
+    p:["routing number","bank account number","voided check","social security number","your ssn","driver's license number","drivers license number","copy of your id","photo of your id","direct deposit form"]},
+  { id:"irreversible_pay", sev:"critical", w:24, title:"Payment through irreversible channels",
+    why:"Gift cards, crypto, and peer-to-peer apps can't be reversed. No payroll uses them.",
+    p:["bitcoin","btc wallet","usdt","crypto wallet","cryptocurrency","gift card","gift cards","zelle","cash app","cashapp","venmo","western union","moneygram"]},
+  { id:"mule_recruitment", sev:"warning", w:22, title:"Bank account and ID wanted to 'receive payment'",
+    why:"Being asked for a U.S. bank account and SSN to 'receive salary' before you know the job is the money-mule pattern.",
+    p:["bank account for payment","receive salary payments","salary payments through a u.s. bank","valid u.s. bank account","ssn for employment","for employment eligibility","assisting with its recruitment","on behalf of our partner company","not eligible to apply","reply yes or apply","reply i'm interested","part-time recruiter"]},
+  { id:"pay_to_work", sev:"warning", w:20, title:"The 'job' requires paying for training first",
+    why:"If you must buy a course to get the role, it's a course sale dressed as a job.",
+    p:["training with a fee","training fee","enroll in the program","enroll for the program","enroll here","program fee","internship certificate","letter of recommendation","personal branding session","resume building session"]},
+  { id:"off_platform", sev:"warning", w:17, title:"Pushed onto a messaging app",
+    why:"Moving to an unmonitored app avoids fraud detection and leaves no record.",
+    p:["telegram","whatsapp","google hangouts","signal app","wickr","skype id","add me on","message me at","text me at","dm me on","microsoft teams","teams contact","provide your teams","teams for direct communication"]},
+  { id:"instant_hire", sev:"warning", w:16, title:"Hired with no real process",
+    why:"An offer without an interview means nobody is assessing you.",
+    p:["you have been hired","congratulations you are hired","no interview required","immediate hire","hired on the spot","your resume was selected","we found your resume","start immediately","begin work today"]},
+  { id:"personal_email", sev:"warning", w:18, title:"Recruiter writing from a personal address",
+    why:"Corporate hiring comes from the company's own domain.",
+    p:[]},
+  { id:"text_interview", sev:"warning", w:15, title:"Interview by text only",
+    why:"Scam operations avoid live video because they're using a stolen identity.",
+    p:["chat interview","text interview","no video call","interview through telegram","interview via whatsapp","written interview only"]},
+  { id:"too_good", sev:"warning", w:13, title:"High pay for very little",
+    why:"Pay well above market for no experience is bait.",
+    p:["no experience necessary","no experience required","no skills required","anyone can do this","work only 2 hours","flexible hours high pay","easy money","guaranteed income","earn while you learn"]},
+  { id:"pressure", sev:"warning", w:11, title:"Pressure to decide now",
+    why:"Urgency is there to stop you checking.",
+    p:["limited positions","limited slots","act fast","respond within 24 hours","within the next hour","first come first served","offer expires","urgent hiring","urgently needed"]},
+  { id:"vague_employer", sev:"note", w:9, title:"The employer stays vague",
+    why:"A real posting names the company and a real person.",
+    p:["confidential company","our client is seeking","a leading company","reputable company seeking","well known firm","undisclosed company"]},
+];
+
+const FREE_MAIL = new Set(["gmail.com","yahoo.com","outlook.com","hotmail.com","aol.com","protonmail.com","proton.me","mail.com","yandex.com","gmx.com","icloud.com","live.com","msn.com"]);
+
+const CONTEXT_FLAGS = {
+  very_low_connections: { sev:"warning", w:18, title:"Very few connections (<10)", why:"A real professional has dozens from school and past jobs. Single digits means the account was just created." },
+  low_connections: { sev:"note", w:8, title:"Low connections (<50)", why:"Not damning alone, but reduces the trust you'd give a recruiter." },
+  no_profile_photo: { sev:"warning", w:12, title:"No profile photo", why:"Legitimate recruiters almost always have a headshot." },
+  stock_photo_face: { sev:"warning", w:14, title:"Photo looks fake or AI-generated", why:"Scam operations use generated faces to create accounts in bulk." },
+  thin_profile: { sev:"warning", w:11, title:"Profile barely filled out", why:"A real recruiter's livelihood depends on their profile." },
+  no_activity_history: { sev:"note", w:9, title:"No posts or activity", why:"Real professionals accumulate some trail over time." },
+  recruiter_new_account: { sev:"warning", w:14, title:"Account seems brand new", why:"Fresh accounts are spun up in bulk for these operations." },
+  duplicate_accounts: { sev:"warning", w:16, title:"Multiple accounts, same operation", why:"Coordinated account clusters are a hallmark of scam operations." },
+  same_script_seen_before: { sev:"warning", w:18, title:"Identical script from other people", why:"A shared copy-paste script across different accounts is a coordinated operation." },
+  no_company_page: { sev:"warning", w:12, title:"No real company page", why:"Real employers have an established presence." },
+  no_company_insights: { sev:"warning", w:13, title:"No company data on LinkedIn", why:"Fewer than 30 profiles means LinkedIn can't even show hiring trends." },
+  company_insights_present: { sev:"note", w:-5, title:"Full company insights shown", why:"Real company data is hard to fake — a positive signal." },
+  dodged_verification: { sev:"warning", w:16, title:"Dodged when asked to verify", why:"Real recruiters can verify themselves." },
+  name_company_mismatch: { sev:"warning", w:13, title:"Name doesn't match company", why:"Common when one operation runs many fake accounts." },
+  poster_distant_connection: { sev:"note", w:8, title:"Poster is 3rd+ / no connection", why:"Scam recruiters mass-contact strangers." },
+};
+
+const TRACKING_PARAMS = new Set(["utm_source","utm_medium","utm_campaign","utm_term","utm_category","cpc","affiliate","extra_id_consumer_run"]);
+const REDIRECT_MARKERS = ["/away/","/out/","/click/","/redirect/"];
+const SIGNUP_MARKERS = ["/register","/signup","/sign-up","/apply-with-ai","/start_google_auth"];
+
+function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/\s+/g,"\\s+"); }
+
+function scorePosting(text, company, urlStr, flags) {
+  const findings = [];
+
+  // Text signals
+  SIGNALS.forEach(sig => {
+    if (!sig.p.length) return;
+    const matched = sig.p.filter(p => new RegExp("\\b" + escRe(p) + "\\b","i").test(text));
+    if (matched.length) findings.push({ sev:sig.sev, w:sig.w, title:sig.title, why:sig.why, matched:matched.slice(0,4), id:sig.id });
+  });
+
+  // Free-mail check
+  const emails = (text.match(/[\w.+-]+@[\w-]+\.[\w.-]+/g)||[]).map(e=>e.toLowerCase());
+  const domains = [...new Set(emails.map(e=>e.split("@")[1].replace(/[.,;:]+$/,"")))];
+  const free = domains.filter(d=>FREE_MAIL.has(d));
+  if (free.length && company.trim()) {
+    findings.push({ sev:"warning", w:18, title:"Recruiter writing from a personal address",
+      why:"Corporate hiring comes from the company's own domain. Nothing here comes from a " + company.trim() + " address.",
+      matched:free.map(d=>"@"+d), id:"personal_email" });
+  }
+
+  // Money-mule combo
+  const ids = new Set(findings.map(f=>f.id));
+  if (["banking_pii","mule_recruitment","off_platform"].filter(x=>ids.has(x)).length >= 2) {
+    findings.push({ sev:"critical", w:28, title:"Combined: recruitment + banking/ID + off-platform",
+      why:"This message combines a recruitment pitch, banking/ID request, and an outside app. Together these are the money-mule scam.",
+      matched:["multiple money-mule signals"], id:"mule_combo" });
+  }
+
+  // URL signals
+  if (urlStr.trim()) {
+    const urls = urlStr.split("->").map(u=>u.trim()).filter(Boolean);
+    urls.forEach(u => {
+      try {
+        const parsed = new URL(u);
+        const path = parsed.pathname.toLowerCase();
+        const params = new Set([...parsed.searchParams.keys()].map(k=>k.toLowerCase()));
+        if (REDIRECT_MARKERS.some(m=>path.includes(m)))
+          findings.push({ sev:"note", w:6, title:"Apply link passes through a redirect hop", why:"A redirect before the real listing means you're not going straight to the employer.", matched:[parsed.hostname], id:"url_redirect" });
+        const tracked = [...params].filter(p=>TRACKING_PARAMS.has(p));
+        if (tracked.length)
+          findings.push({ sev:"note", w:5, title:"Apply link carries tracking parameters", why:"UTM and similar tags mean this link is part of a marketing campaign.", matched:tracked, id:"url_tracking" });
+        if (params.has("cpc"))
+          findings.push({ sev:"warning", w:14, title:"Apply link is paid-per-click traffic", why:"Someone gets paid each time this is clicked — that's an ad, not a job posting.", matched:["cpc parameter"], id:"url_cpc" });
+        if (SIGNUP_MARKERS.some(m=>path.includes(m)))
+          findings.push({ sev:"warning", w:15, title:"Forced signup before seeing the listing", why:"Legitimate job boards let you see the posting before making you create an account.", matched:[parsed.hostname+path], id:"url_signup" });
+      } catch(e) {}
+    });
+  }
+
+  // Context flags
+  flags.forEach(f => {
+    const spec = CONTEXT_FLAGS[f];
+    if (spec) findings.push({ sev:spec.sev, w:spec.w, title:spec.title, why:spec.why, matched:["you observed this"], id:"ctx_"+f });
+  });
+
+  // Sort and score
+  const order = { critical:0, warning:1, note:2 };
+  findings.sort((a,b) => order[a.sev]-order[b.sev] || b.w-a.w);
+  const score = Math.min(100, Math.max(0, findings.reduce((s,f)=>s+f.w, 0)));
+  const hasCrit = findings.some(f=>f.sev==="critical");
+  let band, verdict;
+  if (hasCrit || score >= 65) { band="block"; verdict="Treat this as a scam. Don't send money, documents, or banking details."; }
+  else if (score >= 35) { band="review"; verdict="Several things don't add up. Verify the employer independently before replying."; }
+  else if (score >= 15) { band="caution"; verdict="A few things are worth checking. Confirm the company and role exist."; }
+  else { band="clear"; verdict="Nothing here matched a known pattern. Still verify the employer through their own site."; }
+  return { score, band, verdict, findings };
+}
+
+// --- UI wiring ---
+
+const $ = id => document.getElementById(id);
+let lastText = "";
+
+$("check").addEventListener("click", () => {
+  const text = $("text").value.trim();
+  if (!text) { $("status").textContent = "Paste the posting text first."; $("status").className = "status-msg err"; return; }
+  lastText = text;
+  $("status").textContent = ""; $("status").className = "status-msg";
+
+  const r = scorePosting(text, $("company").value, $("url").value, getActiveFlags());
+
+  $("score").textContent = r.score;
+  $("verdict").textContent = r.verdict;
+  const card = $("verdictCard");
+  card.className = "verdict-card " + r.band;
+
+  if (!r.findings.length) {
+    $("findingsList").innerHTML = '<li class="clear-msg">No known patterns matched. That isn\'t a clearance — the most common scams that slip past checks look entirely ordinary until the payment request arrives later.</li>';
+  } else {
+    $("findingsList").innerHTML = r.findings.map(f =>
+      '<li class="finding-item"><div class="finding-header"><span class="sev-tag ' + f.sev + '">' + SEV_LABEL[f.sev] + '</span><span class="finding-title">' + esc(f.title) + '</span></div><p class="finding-why">' + esc(f.why) + '</p>' +
+      (f.matched && f.matched.length ? '<p class="finding-matched">Found: ' + f.matched.map(esc).join(" · ") + '</p>' : '') +
+      '</li>'
+    ).join("");
+  }
+
+  $("results").classList.add("show");
+  $("aiPass").disabled = false;
+  $("results").scrollIntoView({ behavior:"smooth", block:"start" });
+});
+
+$("aiPass").addEventListener("click", async () => {
+  if (!lastText) return;
+  $("aiPass").disabled = true;
+  $("status").textContent = "Reading the wording…"; $("status").className = "status-msg";
+  const prompt = "You analyze job postings and recruiter messages for fraud signals that keyword matching misses: internal inconsistencies, vague duties that don't match the pay, translated or templated phrasing, a company description that doesn't correspond to the work described, or a tone mismatch between the claimed employer and the message.\n\nRespond with JSON only, no markdown fences. Shape: {\"findings\":[{\"severity\":\"critical|warning|note\",\"title\":\"short phrase\",\"why\":\"one or two sentences\"}]}. At most four findings. Empty array if nothing.\n\nPosting:\n" + lastText;
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:1000, messages:[{role:"user",content:prompt}] })
+    });
+    const data = await res.json();
+    const raw = data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n");
+    const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
+    const extra = (parsed.findings||[]).filter(f=>f.title&&f.why);
+    if (!extra.length) { $("status").textContent = "The wording itself didn't raise anything beyond what's listed."; return; }
+    $("findingsList").insertAdjacentHTML("beforeend", extra.map(f => {
+      const sev = ["critical","warning","note"].includes(f.severity) ? f.severity : "note";
+      return '<li class="finding-item"><div class="finding-header"><span class="sev-tag ' + sev + '">' + SEV_LABEL[sev] + '</span><span class="finding-title">' + esc(f.title) + '</span></div><p class="finding-why">' + esc(f.why) + '</p></li>';
+    }).join(""));
+    $("status").textContent = extra.length + " finding" + (extra.length>1?"s":"") + " from language analysis (not scored).";
+  } catch(e) {
+    $("status").textContent = "Language pass didn't come back. The findings above still stand.";
+    $("status").className = "status-msg err";
+  } finally { $("aiPass").disabled = false; }
+});
+
+function esc(s) { return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+</script>
